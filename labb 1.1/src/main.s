@@ -70,7 +70,7 @@ copyvec:
 loop: 
     beq t0, a2, done                # If loop counter eached size, we are done
     lw t3, 0(t1)                    # Load element from src
-    addi t1, t1, 2                  # Move t1 to next element
+    addi t1, t1, 4                  # Move t1 to next element
     sh t3, 0(t2)                    # Store element in dst
     addi t2, t2, 2                  # Move t2 to next element
     addi t0, t0, 1                  # Increase loop counter
@@ -92,12 +92,12 @@ copyelements:
     mul t1, a2, t1                  # Put offset from src in t0
     add t1, a1, t1                  # t1 is dst_start
     sub t2, a3, a2                  
-    addi s1, t2, 1                  # s1 is number of elements
+    addi s5, t2, 1                  # s1 is number of elements
     mv a0, t0
     mv a1, t1
-    mv a2, s1
+    mv a2, s5
     call copyvec
-    mv a0, s1                       # s1 is safe to use here
+    mv a0, s5                      # s1 is safe to use here
     ###########################################################################
     # Epilogue
     #
