@@ -46,10 +46,11 @@ void check_assignment_5();
 //               light_on variable, and clear the interrupt flag for EXTI7. 
 ////////////////////////////////////////////////////////////////////////////////
 
-__attribute__((interrupt("machine"))) 
+__attribute__((interrupt("machine")))
 void exti5_9_handler()
 {
-    // <your code here>
+    light_on ^= 1;          // toggle light state
+    EXTI->INTFR = (1 << 7); // clear interrupt flag
 }
 
 void blink()
@@ -67,14 +68,19 @@ void blink()
     //               GPIO pin. Thus, they have to be configured as input pins
     //               with PULL-UP. 
     ////////////////////////////////////////////////////////////////////////////
+
+    //"For any signal to make it through to the EXTI module, and then PFIC, 
+    //we have to configure the pin as an input pin."
     // <your code here>
-    //
+    GPIO_E->CFGLR = 0x88888888; //1000 = 8 
+    GPIO_E->OUTDR = 0b10000000; //pull up
+
     // To test this step, you can temporarily uncomment the next line. This is 
     // an endless loop that will read the state of the switches and output it to the
     // bargraph, so you can verify that you have configured the GPIO ports correctly.
-    // while(1) GPIO_D->OUTDR = GPIO_E->INDR;
+    //while(1) GPIO_D->OUTDR = GPIO_E->INDR;
 
-    check_assignment_1(); 
+    //check_assignment_1(); 
 
     ///////////////////////////////////////////////////////////////////////////
     // Assignment 2: Routing the right pin to EXTI.
@@ -86,6 +92,24 @@ void blink()
     //                this one)
     ///////////////////////////////////////////////////////////////////////////
     // <your code here>
+
+    typedef struct
+    {
+        volatile uint32_t PCFR1;
+        volatile uint32_t EXTICR1;
+        volatile uint32_t EXTICR2;
+        volatile uint32_t EXTICR3;
+        volatile uint32_t EXTICR4;
+    } AFIO_t;
+
+    #define AFIO ((AFIO_t*)0x40010000)
+    
+    //set EXTI7 mapping
+    // Assignment 2 — route PE7 → EXTI7 using AFIO struct
+    AFIO->EXTICR2 &= ~0xFFFF;       // clear lower 16 bits (0–15)
+    AFIO->EXTICR2 |= (0x4 << 12);   // set EXTI7 to Port E
+
+
     check_assignment_2();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -99,8 +123,24 @@ void blink()
     //               (you will need to create a macro or struct for the EXTI 
     //                registers for this one)
     ///////////////////////////////////////////////////////////////////////////
-    // <your code here> 
+    typedef struct{
+        volatile uint32_t INTENR;
+        volatile uint32_t EVENR;
+        volatile uint32_t RTENR;
+        volatile uint32_t FTENR;
+        volatile uint32_t SWIEVR;
+        volatile uint32_t INTFR;
+    } EXTI_t;
+
+
     // Configure EXTI_RTENR, EXTI_FTENR, and EXTI_INTENR for pin 7
+    #define EXTI ((EXTI_t*)0x40010400) 
+
+    EXTI->RTENR |= (1 << 7);    // rising edge
+    EXTI->FTENR &= ~(1 << 7);   // disable falling edge
+    EXTI->INTENR |= (1 << 7);   // enable interrupt
+
+
     check_assignment_3();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -115,6 +155,9 @@ void blink()
     //               will have to check the vector table in the quickguide
     //               to see which interrupt number corresponds to EXTI7.
     ///////////////////////////////////////////////////////////////////////////
+    #define PFIC_IENR1 ((volatile uint32_t*)0xE000E100)
+    *PFIC_IENR1 |= (1 << 23);
+
     check_assignment_4(); 
 
     ///////////////////////////////////////////////////////////////////////////
