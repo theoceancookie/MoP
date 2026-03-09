@@ -49,29 +49,45 @@ void systick_handler() {
   // TODO: Task 1
   GPIOE->ODR ^= (1 << 0);   // Invert buzzer pin PE0
   //ODR is the Output Data Register — each bit controls one output pin
-  //(1 << 0) creates a bitmask for pin 0: 0000...0001
-  //^= is XOR-assignment, which flips that bit every time it runs
+  //(1 << 0) take 1 and shift it to the left 0 times. creates a bitmask for pin 0: 00000001
+  //^= is XOR-assignment, which flips that first bit every time it runs
   //So each time SysTick fires, PE0 toggles between 0 and 1 → square wave → buzzer makes sound
   
   STK->SR &= ~(1 << 0);     // Acknowledge: clear CNTIF flag
   //SR is the Status Register, and bit 0 is CNTIF — the "count interrupt flag"
   //The hardware sets this flag to 1 when the interrupt fires
   //If you don't clear it, the system thinks the interrupt is still pending
-  //~(1 << 0) flips the mask to 1111...1110
-  //&= with that mask forces bit 0 to 0, clearing the flag
+  //~(1 << 0) flips the mask to 11111110. ~ is what makes it all flip/ invert
+  //&= and operation. with that mask forces bit 0 to 0, clearing the flag
     
   // TODO: Task 4
 }
 
 // Handle external keypad interrupt (on press *and* on release)
+
+uint32_t periods[16] = {
+  1516, 1431, 1351, 1275,
+  1203, 1136, 1072, 1012,
+   955,  901,  851,  803,
+   758,  715,  675,  637
+};
+
 __attribute__((interrupt("machine")))
 void exti_handler() {
   // TODO: Task 2
   uint8_t key = keypad();
 
+  if (key != 0xFF) {
+    // Key pressed - start tone and show key number (1-16) on bargraph
+    systick_periodic_micro(periods[key]);
+    GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8);  
+  } else {
+    // Key released - stop tone and turn off bargraph
+    systick_stop();
+    GPIOD->ODR = (GPIOD->ODR & 0x00FF);                      
+  }
   // Acknowledge the EXTI interrupt
   EXTI->INTFR = EXTI->INTFR;
-
 
 
   // TODO: Task 3
