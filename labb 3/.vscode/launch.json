@@ -1,8 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-
-    // debug with simulator
     {
       "name": "Build and debug (simulator)",
       "type": "cortex-debug",
@@ -13,55 +11,35 @@
       "gdbPath": "${config:mdx07-templates.riscvToolchainPath}riscv32-unknown-elf-gdb",
       "gdbTarget": "localhost:1234",
       "preLaunchTask": "Build MD307 project",
-
-      // Let you see what cortex-debug is doing
-      // "showDevDebugOutput": "raw",
-
-      // Extra commands after connect
       "overrideAttachCommands": [
         "monitor reset halt",
         "load",
         "break main",
         "continue"
       ],
-
-      // This manually scripts the entire restart process
       "overrideRestartCommands": [
         "monitor reset halt",
         "load",
         "break main",
         "continue"
       ],
-      
       "breakAfterReset": true,
-
-      // Peripheral/SVD viewer
       "definitionPath": "${workspaceFolder}/device/ch32v30x.svd"
-
     },
-    // Debug with hardware
     {
       "name": "Build and debug (hardware)",
       "type": "cortex-debug",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "executable": "build/${config:mdx07-templates.appName}.elf",
-
-      // OpenOCD automatic launch
       "servertype": "openocd",
       "serverpath": "${config:mdx07-templates.openocdPath}",
       "configFiles": [
         "${workspaceFolder}/device/wch-riscv.cfg"
       ],
-      // optional: add extra args to OpenOCD if needed
-      //"serverArgs": [ "-d" ], // enable OpenOCD debug output
-
-      // gdb
       "gdbPath": "${config:mdx07-templates.riscvToolchainPath}riscv32-unknown-elf-gdb",
       "runToEntryPoint": "main",
       "preLaunchTask": "Build MD307 project",
-
-      // extra gdb setup
       "overrideLaunchCommands": [
         "monitor reset halt",
         "break main",
@@ -73,13 +51,26 @@
         "load"
       ],
       "breakAfterReset": true,
-
-      // debugger output
-      // "showDevDebugOutput": "raw",
-
-      // svd / peripheral viewer ----------
       "definitionPath": "${workspaceFolder}/device/ch32v30x.svd"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": ".",
+      "program": "build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
-
   ]
 }

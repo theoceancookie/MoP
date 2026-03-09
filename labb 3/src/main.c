@@ -47,7 +47,19 @@ int current_period;
 __attribute__((interrupt("machine")))
 void systick_handler() {
   // TODO: Task 1
+  GPIOE->ODR ^= (1 << 0);   // Invert buzzer pin PE0
+  //ODR is the Output Data Register — each bit controls one output pin
+  //(1 << 0) creates a bitmask for pin 0: 0000...0001
+  //^= is XOR-assignment, which flips that bit every time it runs
+  //So each time SysTick fires, PE0 toggles between 0 and 1 → square wave → buzzer makes sound
   
+  STK->SR &= ~(1 << 0);     // Acknowledge: clear CNTIF flag
+  //SR is the Status Register, and bit 0 is CNTIF — the "count interrupt flag"
+  //The hardware sets this flag to 1 when the interrupt fires
+  //If you don't clear it, the system thinks the interrupt is still pending
+  //~(1 << 0) flips the mask to 1111...1110
+  //&= with that mask forces bit 0 to 0, clearing the flag
+    
   // TODO: Task 4
 }
 
@@ -55,6 +67,13 @@ void systick_handler() {
 __attribute__((interrupt("machine")))
 void exti_handler() {
   // TODO: Task 2
+  uint8_t key = keypad();
+
+  // Acknowledge the EXTI interrupt
+  EXTI->INTFR = EXTI->INTFR;
+
+
+
   // TODO: Task 3
 }
 
