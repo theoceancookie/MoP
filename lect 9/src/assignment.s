@@ -10,7 +10,9 @@
 #           to 1, to tell the CPU that you want to use vectored interrupts.
 ###############################################################################
 init_interrupts: 
-    # <your code here>
+    la   t0, exti5_9_handler
+    csrw mtvec, t0
+    csrsi mstatus, 8
 ret
 
 
@@ -26,4 +28,13 @@ ret
 
 .align 2
 vector_table: 
-    # <your code here>
+    .align 2
+vector_table:
+
+    # entries 0–22 (unused)
+    .rept 23
+        j .
+    .endr
+
+    # entry 23 → EXTI5_9 interrupt
+    j exti5_9_handler

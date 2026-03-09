@@ -15,4 +15,12 @@ InitInterrupts:
 # Hint: Read lecture 08 to remember that CSR registers are accessed using csrw and
 #       csrr instructions (which are in the QuickGuide).
 ###############################################################################
+    la    t0, SysTick_Handler       # t0 = address of SysTick_Handler
+    csrw  mtvec, t0                 # mtvec = t0  (direct mode, all exceptions
+                                    # jump straight to this address)
+
+    li    t0, PFIC_IENR1            # t0 = 0xE000E100 (register address)
+    li    t1, (1 << SYSTICK_IRQ)    # t1 = 0x00001000 (bit 12)
+    sw    t1, 0(t0)                 # PFIC_IENR1 |= (1 << 12)
+
     ret

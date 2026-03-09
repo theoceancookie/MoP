@@ -80,7 +80,7 @@ void exti_handler() {
   if (key != 0xFF) {
     // Key pressed - start tone and show key number (1-16) on bargraph
     systick_periodic_micro(periods[key]);
-    GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8);  
+    GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8); // & 0x00FF preserves pins D0–D7 (keypad pins), then (key + 1) << 8 writes the key number in binary to pins D8–D15 (bargraph)
   } else {
     // Key released - stop tone and turn off bargraph
     systick_stop();
