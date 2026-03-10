@@ -48,6 +48,7 @@
 #define width 479
 #define height 319
 
+
 volatile int update = 0;
 
 typedef struct {
@@ -68,9 +69,12 @@ typedef struct {
 
 #define PWidth 10
 #define PSpeed 3
-Paddle P1 = {width-PWidth, 160, 0, 20};
-Paddle P2 = {PWidth, 160, 0, 20};
+#define PUpSpeed -3
+Paddle P1 = {width-PWidth, 160, 1, 50, 0};
+Paddle P2 = {PWidth, 160, 1, 50, 0};
 
+const int RightCollisionWall = width-PWidth;
+const int LeftCollisionWall = PWidth; 
 
 typedef enum {
     UNBINDED,
@@ -119,20 +123,20 @@ void systick_handler() {
     
 
     //Vänster collision
-    if (ball.x <= ball.size ) {
+    if (ball.x <= ball.size+LeftCollisionWall ) {
         if(ball.y >= P2.y-(P2.size/2) && ball.y <= P2.y+(P2.size/2)){
             ball.speed_x = -ball.speed_x;
         }else{//lose
-            P2.score++;
+            P1.score++;
             resetball();
         }
         
     }
-    if(ball.x >= width - ball.size){
+    if(ball.x >= RightCollisionWall -(ball.size+PWidth)){
         if(ball.y >= P1.y-(P1.size/2) && ball.y <= P1.y+(P1.size/2)){
             ball.speed_x = -ball.speed_x;
         }else{//lose
-            P1.score++;
+            P2.score++;
             resetball();
         }
     }
@@ -156,30 +160,27 @@ void systick_handler() {
 
     //ball
     tft_ellipse(ball.x, ball.y, ball.size, ball.size, COLOR_WHITE, 1);
-    STK->SR &= ~(1 << 0);
+    STK->SR &= 0x1;
 
 }
 __attribute__((interrupt("machine")))
 void exti_handler() {
     uint8_t key = keypad();
 
-    if (key != 0xFF) {
-        // Key pressed - start tone and show key number (1-16) on bargraph
-        if(keybinds[key]=P1DOWN){
-            P1.speed_y = PSpeed;
-        }else if(keybinds[key]=P1UP){
-            P1.speed_y = -PSpeed;
-        }else if(keybinds[key]=P2DOWN){
-            P2.speed_y = PSpeed;
-        }else if(keybinds[key]=P2UP){
-            P2.speed_y = -PSpeed;
-        }
-        GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8); // & 0x00FF preserves pins D0–D7 (keypad pins), then (key + 1) << 8 writes the key number in binary to pins D8–D15 (bargraph)
-    } else {
-    // Key released - stop tone and turn off bargraph
-  
-    GPIOD->ODR = (GPIOD->ODR & 0x00FF);                      
+ 
+    // Key pressed - start tone and show key number (1-16) on bargraph
+    if(keybinds[key]==P1DOWN){
+        P1.speed_y = PSpeed;
+    }else if(keybinds[key]==P1UP){
+        P1.speed_y = -PSpeed;
+    }else if(keybinds[key]==P2DOWN){
+        P2.speed_y = PSpeed;
+    }else if(keybinds[key]==P2UP){
+        P2.speed_y = -PSpeed;
     }
+    //GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8); // & 0x00FF preserves pins D0–D7 (keypad pins), then (key + 1) << 8 writes the key number in binary to pins D8–D15 (bargraph)
+
+    EXTI->INTFR = EXTI->INTFR;
 }
 
 int main(void){

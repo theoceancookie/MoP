@@ -13,7 +13,7 @@ void init_interrupts() {
   // Connect EXTI{0,1,2,3} to port D
   AFIO->EXTICR1 = 0x3333;
   // Use rising and falling triggers on lines {0,1,2,3}
-  EXTI->RTENR |= 0xF << 0;
+  //EXTI->RTENR |= 0xF << 0;
   EXTI->FTENR |= 0xF << 0;
   // Enable interrupts on lines {0,1,2,3}
   EXTI->INTENR |= 0xF << 0;
