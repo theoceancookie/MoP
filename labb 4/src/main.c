@@ -37,18 +37,18 @@ typedef struct {
 } Ball;
 
 typedef struct {
-    int x;
-    int y;
-    int speed_y;
-    int size;
-    int score;
+    volatile int x;
+    volatile int y;
+    volatile int speed_y;
+    volatile int size;
+    volatile int score;
 } Paddle;
 
 #define PWidth 10
-#define PSpeed 3
-#define PUpSpeed -3
-Paddle P1 = {width-PWidth, 160, 1, 50, 0};
-Paddle P2 = {PWidth, 160, 1, 50, 0};
+#define PSpeed 5
+
+Paddle P1 = {width-PWidth, 160, 0, 50, 0};
+Paddle P2 = {PWidth, 160, 0, 50, 0};
 
 const int RightCollisionWall = width-PWidth;
 const int LeftCollisionWall = PWidth; 
@@ -77,9 +77,26 @@ void resetball(){
     ball.speed_x = 3;
     ball.speed_y = 1;
     ball.size = 10;  // x, y, speed_x, speed_y, size
+    if (P1.score == 4|| P2.score == 4){
+        P1.score = 0;
+        P2.score = 0;
+    }
 }
 // volatile int counter = 0;
 
+
+
+
+void update_bargraph() {
+    uint16_t bargraph = 0;
+    for (int i = 0; i < P1.score; i++) {
+        bargraph |= (1 << i);
+    }
+    for (int i = 0; i < P2.score; i++) {
+        bargraph |= (1 << (7 - i));
+    }
+    GPIOD->ODR = (GPIOD->ODR & 0x00FF) | (bargraph << 8);
+}
 __attribute__((interrupt("machine")))
 void systick_handler() {
 
@@ -100,8 +117,9 @@ void systick_handler() {
         if(ball.y >= P2.y-(P2.size/2) && ball.y <= P2.y+(P2.size/2)){
             ball.speed_x = -ball.speed_x;
         }else{//lose
-            P1.score++;
+            P1.score++; //make it loop back to 0: 0, 1, 2, 3, 0...
             resetball();
+            update_bargraph();
         }
         
     }
@@ -109,8 +127,9 @@ void systick_handler() {
         if(ball.y >= P1.y-(P1.size/2) && ball.y <= P1.y+(P1.size/2)){
             ball.speed_x = -ball.speed_x;
         }else{//lose
-            P2.score++;
+            P2.score++; //make it loop back to 0: 0, 1, 2, 3, 0...
             resetball();
+            update_bargraph();
         }
     }
     if (ball.y <= ball.size || ball.y >= height - ball.size) {
@@ -140,24 +159,11 @@ void systick_handler() {
     STK->SR &= 0x1;
 
 }
+volatile int keypad_pending = 0;
 __attribute__((interrupt("machine")))
 void exti_handler() {
-    uint8_t key = keypad();
-
- 
-    // Key pressed - start tone and show key number (1-16) on bargraph
-    if(keybinds[key]==P1DOWN){
-        P1.speed_y = PSpeed;
-    }else if(keybinds[key]==P1UP){
-        P1.speed_y = -PSpeed;
-    }else if(keybinds[key]==P2DOWN){
-        P2.speed_y = PSpeed;
-    }else if(keybinds[key]==P2UP){
-        P2.speed_y = -PSpeed;
-    }
-    //GPIOD->ODR = (GPIOD->ODR & 0x00FF) | ((key + 1) << 8); // & 0x00FF preserves pins D0–D7 (keypad pins), then (key + 1) << 8 writes the key number in binary to pins D8–D15 (bargraph)
-
     EXTI->INTFR = EXTI->INTFR;
+    keypad_pending = 1;
 }
 
 int main(void){
@@ -175,7 +181,17 @@ int main(void){
     
 
     while(1) {
-  
+        if(keypad_pending){
+            uint8_t key = keypad();
+            keypad_pending = 0;// Key pressed - start tone and show key number (1-16) on bargraph
+            if(keybinds[key]==P1DOWN){
+                P1.speed_y = PSpeed;}else if(keybinds[key]==P1UP){
+                P1.speed_y = -PSpeed;}else if(keybinds[key]==P2DOWN){
+                P2.speed_y = PSpeed;}else if(keybinds[key]==P2UP){
+                P2.speed_y = -PSpeed;}
+            for(volatile int d = 0; d < 500; d++);
+        }
+
     }
 
 
