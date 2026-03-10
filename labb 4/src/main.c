@@ -1,26 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////
-// Lab 4: Write a little game!
-// ===========================================================================
-// The introduction to this lab will be a few smaller assignments as usual, 
-// but after that, it is up to you to use what you have learned to write a 
-// simple game.
-// 
-// The game will play on the 480x320 TFT display, so you need to connect that 
-// in the simulator. You will not have to program that directly, instead you 
-// will use the tftlib library we have provided. 
-// It has the following simple API: 
-// - tft_init() to initialize the display (call this once at the start of your 
-//   program)
-// - tft_ellipse(xc, yc, rx, ry, color, filled) to draw an ellipse (filled or not)
-//     - xc, yc are the center coordinates of the ellipse
-//     - rx, ry are the radius along the x and y axes, respectively
-// - tft_rect(x1, y1, w, h, color, filled) to draw a rectangle (filled or not)
-// - tft_line(x1, y1, x2, y2, color) to draw a line
-// - tft_pixel(x, y, color) to draw a single pixel
-// - tft_sprite(x, y, data, w, h) to draw a sprite (a small bitmap) at the 
-//   given location.
-// 
-///////////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -105,24 +82,20 @@ void resetball(){
 
 __attribute__((interrupt("machine")))
 void systick_handler() {
-    //update = 1;  // just set a flag, very fast
-    // counter++;  // increment every time handler fires
-    // STK->SR = 0;  // write 0 to clear CNTIF
 
-    //counter++;
+    //ERASE
 
     // Erase old ball
     tft_ellipse(ball.x, ball.y, ball.size, ball.size, COLOR_BLUE, 1);
 
-    //Paddle for player 1
-    tft_rect(P1.x, P1.y, PWidth, P1.size, COLOR_BLUE, 1 );
-
-    //Paddle for player 2
-    tft_rect(P2.x, P2.y, PWidth, P2.size, COLOR_BLUE, 1 );
+    //Paddle for player 1 and 2
+    tft_rect(P1.x, P1.y - P1.size/2, PWidth, P1.size, COLOR_BLUE, 1);
+    tft_rect(P2.x, P2.y - P2.size/2, PWidth, P2.size, COLOR_BLUE, 1);
 
     
 
-    //Vänster collision
+    //COLLISIONS
+
     if (ball.x <= ball.size+LeftCollisionWall ) {
         if(ball.y >= P2.y-(P2.size/2) && ball.y <= P2.y+(P2.size/2)){
             ball.speed_x = -ball.speed_x;
@@ -144,19 +117,23 @@ void systick_handler() {
         ball.speed_y = -ball.speed_y;
     }
 
-    // Move
+    // MOVE
+
     ball.x += ball.speed_x;
     ball.y += ball.speed_y;
-    P1.y += P1.speed_y;
-    P2.y += P2.speed_y;
+    
+    if (P1.y + P1.speed_y - P1.size/2 >= 0 && P1.y + P1.speed_y +P1.size/2<= height) {
+        P1.y += P1.speed_y;
+    }
+    if (P2.y + P2.speed_y - P2.size/2 >= 0 && P2.y + P2.speed_y + P2.size/2 <= height) {
+        P2.y += P2.speed_y;
+    }
 
     //DRAW
 
-    //Paddle for player 1
-    tft_rect(P1.x, P1.y, PWidth, P1.size, COLOR_WHITE, 1 );
-
-    //Paddle for player 2
-    tft_rect(P2.x, P2.y, PWidth, P2.size, COLOR_WHITE, 1 );
+    //Paddle for player 1 and 2
+    tft_rect(P1.x, P1.y - P1.size/2, PWidth, P1.size, COLOR_WHITE, 1);
+    tft_rect(P2.x, P2.y - P2.size/2, PWidth, P2.size, COLOR_WHITE, 1);
 
     //ball
     tft_ellipse(ball.x, ball.y, ball.size, ball.size, COLOR_WHITE, 1);
@@ -202,38 +179,5 @@ int main(void){
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Assignment 3: Make it bounce in 2D!
-    // =======================================================================
-    // Now modify the code to make the ball bounce in both x and y directions. 
-    ///////////////////////////////////////////////////////////////////////////
-
-    // <your code here>
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Assignment 4: Use a sprite!
-    // =======================================================================
-    // Just for fun, let's use a sprite instead of an ellipse. A sprite is a 
-    // small image, and we have included a bunch of them in the sprites/ 
-    // folder that you can include if you want. 
-    // 
-    // You can find that "sprite_17_2.h" has been included above. Look at that
-    // file and you will see that it is a 16x16 pixel image in the right format.
-    // See the short README in the sprites/ folder for more info. 
-    //
-    // Note that this will be very slow on the simulator, but quite fast on 
-    // hardware, so if you want to use sprites in your game, you might want to
-    // use rectangles as placeholders while developing. 
-    ///////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Assignment 4: And now...
-    // =======================================================================
-    // If you add a little paddle (a rectangle) that can be moved with the 
-    // keypad, you can easily complete a little pong game. Or you could do 
-    // something completely different. 
-    // 
-    // See the canvas page for instructions and points. 
-    ///////////////////////////////////////////////////////////////////////////
     return 0;
 }
