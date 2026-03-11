@@ -83,8 +83,10 @@ void resetball(){
     }
 }
 // volatile int counter = 0;
-
-
+volatile int buzzCount = 0;
+void toggleBuzzer(){
+    GPIOE->ODR ^= (1<<0);
+}
 
 
 void update_bargraph() {
@@ -99,7 +101,10 @@ void update_bargraph() {
 }
 __attribute__((interrupt("machine")))
 void systick_handler() {
-
+    if(buzzCount > 0){
+        toggleBuzzer();
+        buzzCount--;
+    }
     //ERASE
 
     // Erase old ball
@@ -120,6 +125,7 @@ void systick_handler() {
             P1.score++; //make it loop back to 0: 0, 1, 2, 3, 0...
             resetball();
             update_bargraph();
+            buzzCount = 30;
         }
         
     }
@@ -130,6 +136,8 @@ void systick_handler() {
             P2.score++; //make it loop back to 0: 0, 1, 2, 3, 0...
             resetball();
             update_bargraph();
+            buzzCount = 30;
+           
         }
     }
     if (ball.y <= ball.size || ball.y >= height - ball.size) {
@@ -156,7 +164,7 @@ void systick_handler() {
 
     //ball
     tft_ellipse(ball.x, ball.y, ball.size, ball.size, COLOR_WHITE, 1);
-    STK->SR &= 0x1;
+    STK->SR &= 0x0;
 
 }
 volatile int keypad_pending = 0;
@@ -176,7 +184,7 @@ int main(void){
     tft_rect(0,0,479,319,COLOR_BLUE, 1);
 
 
-    systick_periodic_micro(32000);  // 16000 ~60fps
+    systick_periodic_micro(16000);  // 16000 ~60fps
 
     
 
